@@ -10,6 +10,7 @@ import { DEVELOPMENT_SENSOR_SCENARIO, SENSOR_SIMULATION_ENABLED, SENSOR_UPDATE_I
   applySensorScenario, simulateSensorReadings } from '@/data/sensor-simulator';
 import { getDevices, getReadings, getAlerts, getMaintenance, getHomeSummary } from '@/services/api';
 import type { ApiDevice, ApiAlert, ApiMaintenanceTask, ApiHomeSummary } from '@/services/api-types';
+import type { AssistantScope } from '@/services/assistant-scope';
 
 type BackendData = {
   devices: ApiDevice[];
@@ -20,6 +21,8 @@ type BackendData = {
 };
 
 type DemoState = {
+  assistantScope: AssistantScope;
+  setAssistantScope: (scope: AssistantScope) => void;
   backendData: BackendData | null;
   loading: boolean;
   error: string | null;
@@ -43,6 +46,7 @@ type DemoState = {
 const Context = createContext<DemoState | null>(null);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
+  const [assistantScope, setAssistantScope] = useState<AssistantScope>(null);
   const [backendData, setBackendData] = useState<BackendData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,7 +169,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  return <Context.Provider value={{ backendData, loading, error, completed, tasks: maintenance, toggleTask, profile, saveProfile, saveHomeDetails,
+  return <Context.Provider value={{ assistantScope, setAssistantScope, backendData, loading, error, completed, tasks: maintenance, toggleTask, profile, saveProfile, saveHomeDetails,
     sensorReadings, setSensorReadings, devices, deviceSummary, alerts, deviceAlertHistory, homeHealthScore, insight, updatedAt }}>{children}</Context.Provider>;
 }
 

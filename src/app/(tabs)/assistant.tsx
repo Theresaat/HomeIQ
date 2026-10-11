@@ -1,38 +1,58 @@
-import { useRef, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button, Card, Copy, IconTile, Screen } from '@/components/homeiq/ui';
 import { palette } from '@/constants/theme';
-import { getAssistantGreeting, getAssistantResponse, suggestedQuestions, type AssistantMessage } from '@/data/mock-assistant';
+import { PreventiveInsight } from '@/components/homeiq/preventive-insight';
+import { askHomeIQ } from '@/services/api';
+import { createAssistantSubmission } from '@/services/assistant-scope';
+import type { ApiPreventiveInsight } from '@/services/api-types';
 import { useDemo } from '@/state/demo-context';
 
+type AssistantMessage = {
+  id: number;
+  role: 'assistant' | 'user';
+  text: string;
+  insight?: ApiPreventiveInsight;
+  scopeLabel?: string;
+  deviceId?: string;
+};
+
 export default function Assistant() {
-  const { deviceId } = useLocalSearchParams<{ deviceId?: string }>();
-  const { completed, homeHealthScore, devices, insight } = useDemo();
+  const { assistantScope, setAssistantScope } = useDemo();
+  const deviceId = assistantScope?.deviceId;
+  const scopeLabel = assistantScope?.deviceName ?? 'Whole home';
+  useFocusEffect(useCallback(() => () => setAssistantScope(null), [setAssistantScope]));
+  const suggestedQuestions = deviceId
+    ? ['What changed for this device?', 'How urgently should I act?', 'What should I check next?']
+    : ['What should I fix first?', 'Is anything getting worse?', 'What needs my attention today?'];
   const scrollRef = useRef<ScrollView>(null);
   const sendingRef = useRef(false);
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState<AssistantMessage[]>([{
-    id: 0, role: 'assistant', text: getAssistantGreeting(devices, insight, deviceId),
+    id: 0, role: 'assistant', text: 'Ask what changed, why it matters, and what to check next. HomeIQ uses your current readings and recent history when available.',
   }]);
   const [input, setInput] = useState('');
 
   async function send(question: string) {
     const text = question.trim();
     if (!text || sendingRef.current) return;
+    const submission = createAssistantSubmission(text, assistantScope);
     sendingRef.current = true;
     setSending(true);
     const conversation: AssistantMessage[] = [
-      ...messages, { id: messages.length, role: 'user', text },
+      ...messages, { id: messages.length, role: 'user', text, scopeLabel: submission.scopeLabel },
     ];
     setMessages(conversation);
     setInput('');
     try {
-      const response = await getAssistantResponse({ messages: conversation, deviceId, completedTaskIds: completed, homeHealthScore, devices, insight });
-      setMessages(current => [...current, { id: current.length, role: 'assistant', text: response }]);
+      const response = await askHomeIQ(submission.request);
+      setMessages(current => [...current, { id: current.length, role: 'assistant', text: response.answer,
+        insight: response, scopeLabel: submission.scopeLabel, deviceId: submission.request.deviceId }]);
     } catch {
       setMessages(current => [...current, {
-        id: current.length, role: 'assistant', text: 'I couldn’t respond just now. Please try asking again.',
+        id: current.length, role: 'assistant', scopeLabel: submission.scopeLabel,
+        text: 'HomeIQ couldn’t load an insight right now. Please try asking again. You can still review your devices and alerts.',
       }]);
     } finally {
       sendingRef.current = false;
@@ -42,11 +62,11 @@ export default function Assistant() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <Screen title="AI Assistant" subtitle="Your home care companion" scrollRef={scrollRef}
+      <Screen title="Ask HomeIQ" subtitle="Preventive insights for your home" scrollRef={scrollRef}
         footer={
           <View style={s.composer}>
             <Card>
-              <TextInput accessibilityLabel="Message HomeIQ demo assistant" placeholder="Ask about your home…"
+              <TextInput accessibilityLabel="Ask HomeIQ a question" placeholder="Ask about your home…"
                 placeholderTextColor={palette.muted} value={input} onChangeText={setInput}
                 multiline scrollEnabled style={s.input} />
               <Button label={sending ? 'Responding…' : 'Send message'} disabled={!input.trim() || sending}
@@ -59,18 +79,21 @@ export default function Assistant() {
             <IconTile name="assistant" />
             <View style={{ flex: 1 }}>
               <Copy style={{ fontWeight: '700' }}>Meet HomeIQ</Copy>
-              <Copy muted>Demo assistant · Scripted replies</Copy>
+              <Copy muted>Current readings · Historical changes · Practical next steps</Copy>
             </View>
           </View>
+          <Copy muted>Asking about: {scopeLabel}</Copy>
+          {deviceId && <Button label="Ask about the whole home" secondary disabled={sending}
+            onPress={() => setAssistantScope(null)} />}
         </Card>
         {messages.map(message => (
           <View key={message.id} style={[s.bubble, message.role === 'user' && s.user]}>
             <Text style={[s.label, message.role === 'user' && { color: '#DCE6FF' }]}>
               {message.role === 'assistant' ? 'HomeIQ' : 'You'}
             </Text>
-            <Copy style={message.role === 'user' ? { color: palette.white } : undefined}>
-              {message.text}
-            </Copy>
+            {message.scopeLabel && <Copy style={[s.scope, message.role === 'user' && { color: '#DCE6FF' }]}>{message.scopeLabel}</Copy>}
+            {message.insight ? <PreventiveInsight insight={message.insight} deviceId={message.deviceId} /> :
+              <Copy style={message.role === 'user' ? { color: palette.white } : undefined}>{message.text}</Copy>}
           </View>
         ))}
         <View style={s.suggestions}>
@@ -80,13 +103,14 @@ export default function Assistant() {
             </Pressable>
           ))}
         </View>
-        {sending && <Copy muted>HomeIQ is responding…</Copy>}
+        {sending && <Copy muted>HomeIQ is reviewing sensor evidence…</Copy>}
       </Screen>
     </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
+  scope: { color: palette.muted, fontSize: 11, lineHeight: 17 },
   composer: { width: '100%', maxWidth: 620, alignSelf: 'center', paddingHorizontal: 18, paddingBottom: 12 },
   heading: {
     flexDirection: 'row', alignItems: 'center', gap: 12

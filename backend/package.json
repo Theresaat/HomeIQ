@@ -14,9 +14,11 @@
     "test": "npm run build && node --test tests/*.test.mjs",
     "snowflake:test": "node --env-file-if-exists=.env src/scripts/test-snowflake.ts",
     "snowflake:seed-devices": "node --env-file-if-exists=.env src/scripts/seed-devices.ts",
-    "snowflake:seed-history": "node --env-file-if-exists=.env src/scripts/seed-history.ts"
+    "snowflake:seed-history": "node --env-file-if-exists=.env src/scripts/seed-history.ts",
+    "gemini:test": "node --env-file-if-exists=.env src/scripts/test-gemini.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.28.0",
     "express": "^5.2.1",
     "snowflake-sdk": "^3.4.0"
   },

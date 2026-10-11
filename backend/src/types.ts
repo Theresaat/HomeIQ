@@ -59,6 +59,44 @@ export type WhatChangedInsight = SensorTrend | {
   historySampleSize: number;
 };
 
+export type HomeIQReasoningContext = {
+  scope?: 'device' | 'home';
+  deviceId?: string;
+  question?: string;
+  devices: (Pick<Device, 'id' | 'name'> & Partial<Omit<Device, 'id' | 'name' | 'latestReadings'>>)[];
+  readings: SensorReading[];
+  currentReadingCount?: number;
+  history?: SensorHistoryReading[];
+  whatChanged?: WhatChangedInsight[];
+  alerts?: Alert[];
+  maintenanceTasks?: MaintenanceTask[];
+  homeSummary?: HomeSummary;
+  historyAvailability?: { deviceId: string; status: 'available' | 'empty' | 'unavailable' | 'not_requested' }[];
+};
+
+export type DeviceReasoningContext = HomeIQReasoningContext & {
+  scope: 'device';
+  deviceId: string;
+  devices: Omit<Device, 'latestReadings'>[];
+  homeSummary: HomeSummary;
+};
+
+export type HomeReasoningContext = HomeIQReasoningContext & {
+  scope: 'home';
+  devices: Omit<Device, 'latestReadings'>[];
+  homeSummary: HomeSummary;
+};
+
+export type HomeIQReasoningResponse = {
+  answer: string;
+  severity: SensorStatus;
+  riskLevel: 'low' | 'moderate' | 'high';
+  trend: 'improving' | 'stable' | 'worsening' | 'unknown';
+  recommendedTimeframe: 'Act now' | 'Check within 24 hours' | 'Monitor this week' | 'Routine maintenance';
+  recommendedActions: string[];
+  basedOn: string[];
+};
+
 export type Device = {
   id: string;
   name: string;

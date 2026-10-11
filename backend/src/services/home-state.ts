@@ -45,11 +45,15 @@ export function generateActiveAlerts(devices: Device[]): Alert[] {
   });
 }
 
-function countOverdueTasks(tasks: MaintenanceTask[], asOf: Date): number {
+export function isOverdueMaintenanceTask(task: MaintenanceTask, asOf: Date): boolean {
   // Local calendar days match the existing frontend maintenance behavior.
   const today = new Date(asOf);
   today.setHours(0, 0, 0, 0);
-  return tasks.filter(task => !task.completed && new Date(`${task.dueDate}T00:00:00`) < today).length;
+  return !task.completed && new Date(`${task.dueDate}T00:00:00`) < today;
+}
+
+function countOverdueTasks(tasks: MaintenanceTask[], asOf: Date): number {
+  return tasks.filter(task => isOverdueMaintenanceTask(task, asOf)).length;
 }
 
 export function calculateHomeHealthScore({ sensorReadings, alerts, maintenanceTasks, asOf = new Date() }: {

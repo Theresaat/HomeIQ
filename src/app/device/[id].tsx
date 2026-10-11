@@ -2,9 +2,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { HealthScoreRing } from '@/components/homeiq/health-card';
+import { WhatChangedCard } from '@/components/homeiq/what-changed-card';
 import { Badge, Button, Card, Copy, IconTile, ItemRow, Metric, Screen, SectionHeading } from '@/components/homeiq/ui';
 import { palette } from '@/constants/theme';
 import { useDemo } from '@/state/demo-context';
+import { openDeviceAssistant } from '@/services/assistant-scope';
 import { formatSensorReading, sensorStatusLabels, sensorStatusTones } from '@/data/sensors';
 
 function formatDate(value: string, includeTime = false) {
@@ -16,7 +18,7 @@ function formatDate(value: string, includeTime = false) {
 
 export default function DeviceDetails() {
   const [readingsWidth, setReadingsWidth] = useState(0);
-  const { devices, deviceAlertHistory } = useDemo();
+  const { devices, deviceAlertHistory, setAssistantScope } = useDemo();
   const { id } = useLocalSearchParams<{ id: string }>();
   const device = devices.find(item => item.id === id);
 
@@ -75,6 +77,8 @@ export default function DeviceDetails() {
         {device.latestReadings.length === 0 && <Copy muted>No sensor readings available yet.</Copy>}
       </Card>
 
+      <WhatChangedCard key={device.id} deviceId={device.id} />
+
       <Card>
         <SectionHeading title="Recent Sensor Activity" icon="devices" />
         {activity.map(event => (
@@ -98,7 +102,7 @@ export default function DeviceDetails() {
         <Copy style={styles.bold}>{device.recommendedAction.title}</Copy>
         <Copy muted>{device.recommendedAction.detail}</Copy>
         <Button label="Ask about this device" secondary
-          onPress={() => router.push({ pathname: '/assistant', params: { deviceId: device.id } })} />
+          onPress={() => openDeviceAssistant(device, setAssistantScope, router.navigate)} />
       </Card>
 
       <Card>

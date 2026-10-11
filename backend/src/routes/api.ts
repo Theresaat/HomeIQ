@@ -5,8 +5,10 @@ import { acceptSensorReading } from '../services/readings.ts';
 import { persistSensorReading } from '../services/sensor-persistence.ts';
 import { getSensorHistory } from '../services/sensor-history.ts';
 import { deriveWhatChanged } from '../services/what-changed.ts';
+import { createAiRouter } from './ai.ts';
 
 export const apiRouter = Router();
+apiRouter.use('/ai', createAiRouter());
 
 apiRouter.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'HomeIQ API' });

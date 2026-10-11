@@ -3,8 +3,14 @@ import { apiRouter } from './routes/api.ts';
 
 export function createApp() {
   const app = express();
-  app.use((_req, res, next) => {
+  app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
     next();
   });
   app.use(express.json());
