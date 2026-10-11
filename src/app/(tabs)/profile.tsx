@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { Icon } from '@/components/homeiq/icon';
 import { ProfileEditor } from '@/components/homeiq/profile-editor';
-import { Card, Copy, IconTile, ItemRow, Screen, SectionHeading } from '@/components/homeiq/ui';
+import { Button, Card, Copy, IconTile, ItemRow, Screen, SectionHeading } from '@/components/homeiq/ui';
 import { palette } from '@/constants/theme';
 import { devices } from '@/data/mock-home';
 import { useDemo } from '@/state/demo-context';
+import { useAuth } from '@/state/auth-context';
 
 export default function Profile() {
+  const { user, signOut, subscriptionPlan, updateName } = useAuth();
   const { profile, saveProfile, saveHomeDetails, homeHealthScore } = useDemo();
   const [editing, setEditing] = useState<'profile' | 'home' | null>(null);
   const [notifications, setNotifications] = useState(profile.notificationPreferences);
@@ -20,8 +22,9 @@ export default function Profile() {
           <View style={styles.profileRow}>
             <IconTile name="profile" />
             <View style={styles.profileInfo}>
-              <Copy style={styles.userName}>{profile.name}</Copy>
+              <Copy style={styles.userName}>{user?.name ?? profile.name}</Copy>
               <Copy muted>{profile.role}</Copy>
+              <Copy muted>{user?.email}</Copy>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Edit Profile"
               onPress={() => setEditing('profile')}
@@ -93,10 +96,13 @@ export default function Profile() {
         </Card>
         <Card style={styles.compactCard}>
           <SectionHeading title="Account Settings" icon="profile" />
+          <ItemRow title="Subscription" detail={`Current Plan: ${subscriptionPlan ?? 'No plan selected'}`}
+            icon="shield" onPress={() => router.push('/protect')} />
           {profile.accountSettings.map(setting => (
-            <ItemRow key={setting.id} title={setting.label} detail={setting.value} icon="profile" />
+            <ItemRow key={setting.id} title={setting.label} detail={setting.id === 'email' ? user?.email ?? setting.value : setting.value} icon="profile" />
           ))}
           <Copy muted style={styles.caption}>Sample account details · Read-only in this demo</Copy>
+          <Button label="Log Out" secondary onPress={signOut} />
         </Card>
         <Card style={styles.compactCard}>
           <Copy style={{ fontWeight: '700' }}>HomeIQ</Copy>
@@ -104,10 +110,13 @@ export default function Profile() {
           <Copy muted style={styles.caption}>Version 1.0 · Mobile UI prototype</Copy>
         </Card>
       </Screen>
-      {editing && <ProfileEditor mode={editing} initialProfile={profile}
+      {editing && <ProfileEditor mode={editing} initialProfile={{ ...profile, name: user?.name ?? profile.name }}
         onCancel={() => setEditing(null)}
         onSave={draft => {
-          if (editing === 'profile') saveProfile({ name: draft.name, role: draft.role });
+          if (editing === 'profile') {
+            saveProfile({ name: draft.name, role: draft.role });
+            updateName(draft.name);
+          }
           else saveHomeDetails(draft.property);
           setEditing(null);
         }} />}
