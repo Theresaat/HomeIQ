@@ -24,6 +24,41 @@ export type SensorReading = {
   status: SensorStatus;
 };
 
+export type SensorHistoryReading = SensorReading & {
+  ingestedAt: string | null;
+};
+
+export type SensorTrend = {
+  deviceId: string;
+  sensorType: SensorType;
+  label: string;
+  unit: string;
+  status: SensorStatus;
+  current: number;
+  previous: number;
+  recentAverage: number;
+  change: number;
+  percentageChange: number | null;
+  direction: 'increasing' | 'decreasing' | 'stable';
+  sampleSize: number;
+  currentTimestamp: string;
+  previousTimestamp: string;
+  recentReadings: {
+    value: number;
+    status: SensorStatus;
+    timestamp: string;
+    ingestedAt: string | null;
+  }[];
+};
+
+export type WhatChangedInsight = SensorTrend | {
+  deviceId: string;
+  status: 'insufficient_history';
+  message: string;
+  numericReadingCount: number;
+  historySampleSize: number;
+};
+
 export type Device = {
   id: string;
   name: string;

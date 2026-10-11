@@ -11,14 +11,19 @@
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test tests/*.test.mjs"
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "snowflake:test": "node --env-file-if-exists=.env src/scripts/test-snowflake.ts",
+    "snowflake:seed-devices": "node --env-file-if-exists=.env src/scripts/seed-devices.ts",
+    "snowflake:seed-history": "node --env-file-if-exists=.env src/scripts/seed-history.ts"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "snowflake-sdk": "^3.4.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
+    "@types/snowflake-sdk": "^1.6.24",
     "typescript": "^6.0.3"
   }
 }
