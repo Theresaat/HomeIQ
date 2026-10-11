@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { alertSeverityTones, partners, tasks, waterUsage } from '@/data/mock-home';
+import { alertSeverityTones, partners, waterUsage } from '@/data/mock-home';
 import { palette } from '@/constants/theme';
 import { useDemo } from '@/state/demo-context';
 import { HealthScoreCard } from '@/components/homeiq/health-card';
 import { Badge, Button, Card, Copy, ItemRow, Metric, Screen, SectionHeading } from '@/components/homeiq/ui';
 
 export default function Dashboard() {
-  const { completed, deviceSummary, alerts, homeHealthScore, insight } = useDemo();
+  const { tasks, completed, deviceSummary, alerts, homeHealthScore, insight } = useDemo();
   const upcoming = tasks.filter(task => !completed.includes(task.id));
   const waterChartMax = Math.max(waterUsage.dailyGoal, ...waterUsage.week.map(day => day.gallons));
 

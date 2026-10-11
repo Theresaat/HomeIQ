@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { palette, toneBackground } from '@/constants/theme';
-import { tasks } from '@/data/mock-home';
 import { useDemo } from '@/state/demo-context';
 import { Card, Copy, IconTile, SectionHeading } from './ui';
 
@@ -48,7 +47,12 @@ export function HealthScoreRing({ score, accessibilityLabel = 'Health score' }: 
 }
 
 export function HealthScoreCard({ score }: { score: number }) {
-  const { completed, deviceSummary, alerts, updatedAt } = useDemo();
+  const { tasks, completed, deviceSummary, alerts, updatedAt, backendData, loading, error } = useDemo();
+  const snapshotLabel = __DEV__
+    ? backendData ? 'Backend snapshot'
+      : loading ? 'Loading backend · Local fallback'
+      : error ? 'Backend unavailable · Local fallback' : 'Local fallback'
+    : 'Demo snapshot';
   const stats = [
     { label: 'Systems healthy', value: deviceSummary.healthy,
       tone: 'green' as const, icon: 'check' as const },
@@ -63,7 +67,7 @@ export function HealthScoreCard({ score }: { score: number }) {
   return (
     <Card>
       <SectionHeading title="Home Health Score" icon="home" />
-      <Copy muted style={styles.updated}>Updated {updatedAt ? new Date(updatedAt).toLocaleString() : 'Unavailable'} · Demo snapshot</Copy>
+      <Copy muted style={styles.updated}>Updated {updatedAt ? new Date(updatedAt).toLocaleString() : 'Unavailable'} · {snapshotLabel}</Copy>
       <View style={styles.body}>
         <HealthScoreRing score={score} accessibilityLabel="Home health" />
         <View style={styles.stats}>

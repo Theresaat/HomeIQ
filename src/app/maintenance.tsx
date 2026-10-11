@@ -1,10 +1,9 @@
 import { router } from 'expo-router';
 import { Badge, Card, Copy, Button, ItemRow, Screen, SectionHeading } from '@/components/homeiq/ui';
-import { devices, tasks } from '@/data/mock-home';
 import { useDemo } from '@/state/demo-context';
 
 export default function Maintenance() {
-  const { completed, toggleTask } = useDemo();
+  const { devices, tasks, completed, toggleTask } = useDemo();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const items = tasks.map(task => ({

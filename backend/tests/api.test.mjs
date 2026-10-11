@@ -21,6 +21,7 @@ async function get(endpoint) {
   const response = await fetch(`${baseUrl}/${endpoint}`);
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /^application\/json/);
+  assert.equal(response.headers.get('access-control-allow-origin'), '*');
   return response.json();
 }
 

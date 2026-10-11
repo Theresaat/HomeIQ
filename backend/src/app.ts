@@ -3,6 +3,10 @@ import { apiRouter } from './routes/api.ts';
 
 export function createApp() {
   const app = express();
+  app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
+  });
   app.use(express.json());
   app.use('/api', apiRouter);
   const handleMalformedJson: ErrorRequestHandler = (error: unknown, _req, res, next) => {
